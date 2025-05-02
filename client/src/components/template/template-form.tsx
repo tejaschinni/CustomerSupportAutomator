@@ -31,6 +31,32 @@ import { BrandSettings } from "@/components/brand/brand-settings";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { VariablePicker } from "./variable-picker";
 
+// Define type interfaces
+interface Category {
+  id: number;
+  name: string;
+  color: string;
+}
+
+interface Template {
+  id: number;
+  name: string;
+  content: string;
+  categoryId: number;
+  headerColor?: string;
+  accentColor?: string;
+  logoUrl?: string;
+  updatedAt: string;
+}
+
+interface BrandSetting {
+  id: number;
+  companyName: string;
+  primaryColor: string;
+  accentColor: string;
+  logoUrl?: string;
+}
+
 // Form schema
 const templateFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -54,18 +80,18 @@ export function TemplateForm({ id }: TemplateFormProps) {
   const { toast } = useToast();
 
   // Fetch categories
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
 
   // Fetch template if editing
-  const { data: template, isLoading: isLoadingTemplate } = useQuery({
+  const { data: template, isLoading: isLoadingTemplate } = useQuery<Template>({
     queryKey: ['/api/templates', id],
     enabled: !!id,
   });
 
   // Fetch brand settings for defaults
-  const { data: brandSettings } = useQuery({
+  const { data: brandSettings } = useQuery<BrandSetting>({
     queryKey: ['/api/brand-settings'],
   });
 

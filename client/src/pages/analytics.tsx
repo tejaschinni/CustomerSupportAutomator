@@ -30,30 +30,56 @@ import {
   Cell,
 } from "recharts";
 import { format, subDays } from "date-fns";
+import { useMobile } from "@/hooks/use-mobile";
+
+// Define Analytics data types
+interface TemplateUsage {
+  templateId: number;
+  count: number;
+  name?: string;
+}
+
+interface DailyResponse {
+  date: string;
+  count: number;
+}
+
+interface CategoryDistribution {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface AnalyticsData {
+  templateUsage: TemplateUsage[];
+  dailyResponses: DailyResponse[];
+  categoryDistribution: CategoryDistribution[];
+}
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState("7days");
+  const isMobile = useMobile();
   
   // Fetch analytics data
-  const { data: analyticsData, isLoading } = useQuery({
+  const { data: analyticsData, isLoading } = useQuery<AnalyticsData>({
     queryKey: ['/api/analytics', timeRange],
   });
   
   // Fetch templates for reference
-  const { data: templates } = useQuery({
+  const { data: templates = [] } = useQuery<any[]>({
     queryKey: ['/api/templates'],
   });
 
   // Get template name by ID
   const getTemplateName = (id: number) => {
-    const template = templates?.find((t: any) => t.id === id);
+    const template = templates.find((t) => t.id === id);
     return template?.name || `Template ${id}`;
   };
 
   // Format data for charts
   const formatTemplateUsage = () => {
     if (!analyticsData?.templateUsage) return [];
-    return analyticsData.templateUsage.map((item: any) => ({
+    return analyticsData.templateUsage.map((item) => ({
       ...item,
       name: getTemplateName(item.templateId),
     }));
@@ -78,7 +104,7 @@ export default function Analytics() {
     }
     
     // Add actual data
-    analyticsData.dailyResponses.forEach((item: any) => {
+    analyticsData.dailyResponses.forEach((item) => {
       if (dateMap.has(item.date)) {
         dateMap.set(item.date, item.count);
       }
@@ -86,7 +112,7 @@ export default function Analytics() {
     
     // Convert to array for chart
     return Array.from(dateMap).map(([date, count]) => ({
-      date: format(new Date(date), 'MMM dd'),
+      date: format(new Date(date), isMobile ? 'MM/dd' : 'MMM dd'),
       value: count,
     }));
   };
@@ -99,63 +125,81 @@ export default function Analytics() {
   // Define chart colors
   const COLORS = ['#3B82F6', '#10B981', '#6366F1', '#F59E0B', '#EF4444', '#8B5CF6'];
 
+  // Chart configurations for mobile
+  const getChartMargin = () => {
+    return isMobile 
+      ? { top: 5, right: 10, left: 0, bottom: 5 }
+      : { top: 5, right: 30, left: 20, bottom: 5 };
+  };
+
+  const getLabelSize = () => {
+    return isMobile ? 10 : 12;
+  };
+
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm z-10">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-lg font-semibold text-gray-900">Analytics</h1>
-          <div className="w-48">
-            <Select
-              value={timeRange}
-              onValueChange={setTimeRange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select time range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7days">Last 7 days</SelectItem>
-                <SelectItem value="30days">Last 30 days</SelectItem>
-                <SelectItem value="90days">Last 90 days</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
+            <h1 className="text-lg font-semibold text-gray-900">Analytics</h1>
+            <div className="w-full xs:w-48">
+              <Select
+                value={timeRange}
+                onValueChange={setTimeRange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7days">Last 7 days</SelectItem>
+                  <SelectItem value="30days">Last 30 days</SelectItem>
+                  <SelectItem value="90days">Last 90 days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">
         {isLoading ? (
           <div className="text-center py-8">Loading analytics data...</div>
         ) : !analyticsData ? (
           <div className="text-center py-8">No analytics data available</div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
             {/* Daily Responses Chart */}
             <Card className="col-span-1 md:col-span-2">
-              <CardHeader>
-                <CardTitle>Daily Responses</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Daily Responses</CardTitle>
                 <CardDescription>
                   Number of template responses generated per day
                 </CardDescription>
               </CardHeader>
-              <CardContent className="h-80">
+              <CardContent className="h-60 sm:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={formatDailyResponses()}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    margin={getChartMargin()}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
+                    <XAxis 
+                      dataKey="date"
+                      tick={{ fontSize: getLabelSize() }} 
+                      interval={isMobile ? 1 : 0}
+                    />
+                    <YAxis tick={{ fontSize: getLabelSize() }} width={isMobile ? 25 : 35} />
                     <Tooltip />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: getLabelSize() }} />
                     <Line
                       type="monotone"
                       dataKey="value"
                       name="Responses"
                       stroke="#3B82F6"
-                      activeDot={{ r: 8 }}
+                      activeDot={{ r: 6 }}
+                      strokeWidth={2}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -164,24 +208,34 @@ export default function Analytics() {
 
             {/* Template Usage Chart */}
             <Card>
-              <CardHeader>
-                <CardTitle>Template Usage</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Template Usage</CardTitle>
                 <CardDescription>
                   Most frequently used templates
                 </CardDescription>
               </CardHeader>
-              <CardContent className="h-80">
+              <CardContent className="h-60 sm:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={formatTemplateUsage()}
                     layout="vertical"
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    margin={getChartMargin()}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis type="category" dataKey="name" width={150} />
+                    <XAxis type="number" tick={{ fontSize: getLabelSize() }} />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      width={isMobile ? 100 : 150}
+                      tick={{ fontSize: getLabelSize() }}
+                      tickFormatter={(value) => {
+                        return isMobile && value.length > 18 
+                          ? value.substring(0, 18) + '...' 
+                          : value;
+                      }}
+                    />
                     <Tooltip />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: getLabelSize() }} />
                     <Bar dataKey="count" name="Usage Count" fill="#3B82F6" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -190,27 +244,29 @@ export default function Analytics() {
 
             {/* Category Distribution Chart */}
             <Card>
-              <CardHeader>
-                <CardTitle>Category Distribution</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Category Distribution</CardTitle>
                 <CardDescription>
                   Template usage by category
                 </CardDescription>
               </CardHeader>
-              <CardContent className="h-80">
+              <CardContent className="h-60 sm:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={formatCategoryDistribution()}
                       cx="50%"
                       cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
+                      labelLine={!isMobile}
+                      outerRadius={isMobile ? 70 : 80}
                       fill="#8884d8"
                       dataKey="value"
                       nameKey="name"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={isMobile ? null : ({ name, percent }) => (
+                        `${name}: ${(percent * 100).toFixed(0)}%`
+                      )}
                     >
-                      {formatCategoryDistribution().map((entry: any, index: number) => (
+                      {formatCategoryDistribution().map((entry, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={entry.color || COLORS[index % COLORS.length]} 
@@ -218,7 +274,7 @@ export default function Analytics() {
                       ))}
                     </Pie>
                     <Tooltip />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: getLabelSize() }} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
