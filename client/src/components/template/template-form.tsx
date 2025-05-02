@@ -174,6 +174,7 @@ export function TemplateForm({ id }: TemplateFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-6">
+            {/* Template name and category - responsive layout */}
             <div className="sm:col-span-4">
               <FormField
                 control={form.control}
@@ -223,6 +224,7 @@ export function TemplateForm({ id }: TemplateFormProps) {
               />
             </div>
 
+            {/* Tabs section */}
             <div className="sm:col-span-6">
               <Tabs 
                 defaultValue="content" 
@@ -234,10 +236,12 @@ export function TemplateForm({ id }: TemplateFormProps) {
                   <TabsTrigger value="content">Template Content</TabsTrigger>
                   <TabsTrigger value="branding">Brand Settings</TabsTrigger>
                 </TabsList>
+                
+                {/* Content Tab */}
                 <TabsContent value="content" className="mt-4">
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <FormLabel htmlFor="content">Template Content</FormLabel>
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+                      <FormLabel htmlFor="content" className="mb-0">Template Content</FormLabel>
                       <VariablePicker onSelectVariable={insertVariable} />
                     </div>
 
@@ -250,7 +254,7 @@ export function TemplateForm({ id }: TemplateFormProps) {
                             <Textarea 
                               id="content"
                               {...field} 
-                              className="min-h-[300px] font-mono"
+                              className="min-h-[250px] md:min-h-[300px] font-mono"
                             />
                           </FormControl>
                           <FormMessage />
@@ -262,22 +266,25 @@ export function TemplateForm({ id }: TemplateFormProps) {
                     </p>
                   </div>
                 </TabsContent>
+                
+                {/* Branding Tab */}
                 <TabsContent value="branding" className="mt-4">
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2">
                       <h4 className="text-sm font-medium text-gray-900">Brand Settings</h4>
                       <Button
                         type="button"
                         variant="ghost"
-                        className="text-primary hover:text-blue-700"
+                        size="sm"
+                        className="text-primary hover:text-blue-700 xs:w-auto w-full justify-center"
                         onClick={useCompanyDefaults}
                       >
                         Use company defaults
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
-                      <div className="sm:col-span-3">
+                    <div className="grid grid-cols-1 gap-y-4 gap-x-4 xs:grid-cols-2 sm:grid-cols-6">
+                      <div className="xs:col-span-1 sm:col-span-3">
                         <FormField
                           control={form.control}
                           name="headerColor"
@@ -295,7 +302,7 @@ export function TemplateForm({ id }: TemplateFormProps) {
                           )}
                         />
                       </div>
-                      <div className="sm:col-span-3">
+                      <div className="xs:col-span-1 sm:col-span-3">
                         <FormField
                           control={form.control}
                           name="accentColor"
@@ -313,7 +320,7 @@ export function TemplateForm({ id }: TemplateFormProps) {
                           )}
                         />
                       </div>
-                      <div className="sm:col-span-6">
+                      <div className="xs:col-span-2 sm:col-span-6">
                         <FormField
                           control={form.control}
                           name="logoUrl"
@@ -338,25 +345,29 @@ export function TemplateForm({ id }: TemplateFormProps) {
             </div>
           </div>
 
-          <div className="flex justify-between pt-5">
+          {/* Form actions - responsive layout */}
+          <div className="flex flex-col-reverse xs:flex-row xs:justify-between pt-5 gap-3 xs:gap-0">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate("/templates")}
+              className="w-full xs:w-auto"
             >
               Cancel
             </Button>
-            <div className="flex space-x-2">
+            <div className="flex flex-col xs:flex-row gap-2 xs:space-x-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handlePreview}
+                className="w-full xs:w-auto"
               >
                 Preview
               </Button>
               <Button
                 type="submit"
                 disabled={mutation.isPending}
+                className="w-full xs:w-auto"
               >
                 {mutation.isPending ? "Saving..." : (id ? "Update Template" : "Create Template")}
               </Button>

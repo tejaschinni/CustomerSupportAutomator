@@ -76,6 +76,16 @@
   body {
     @apply font-sans antialiased bg-gray-50 text-foreground;
   }
+  
+  /* Custom breakpoint for extra-small screens */
+  @media (min-width: 480px) {
+    .xs\:inline {
+      display: inline;
+    }
+    .xs\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
 }
 
 @layer components {
@@ -97,5 +107,16 @@
   
   .category-pill-inactive {
     @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50;
+  }
+  
+  /* Mobile-specific styles */
+  @media (max-width: 767px) {
+    .category-pill {
+      @apply w-full text-center py-3 px-3 mb-2;
+    }
+    
+    .stats-card {
+      @apply py-3;
+    }
   }
 }
